@@ -10,9 +10,15 @@ import bcrypt from "bcryptjs";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseSecret = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Validation for core environment variables in production
-if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
-  console.warn("WARNING: AUTH_SECRET is missing. This will cause a Configuration error in Auth.js v5.");
+// Diagnostics for production logs (Safe version - only checks presence)
+if (process.env.NODE_ENV === "production") {
+  console.log("[Auth-Diagnostic] Environment check:", {
+    hasAuthSecret: !!process.env.AUTH_SECRET,
+    hasAuthUrl: !!process.env.AUTH_URL || !!process.env.NEXTAUTH_URL,
+    hasSupabaseUrl: !!supabaseUrl,
+    hasSupabaseKey: !!supabaseSecret,
+    nodeEnv: process.env.NODE_ENV,
+  });
 }
 
 // Only initialize adapter if we have the credentials
@@ -23,86 +29,79 @@ const adapter = (supabaseUrl && supabaseSecret)
     })
   : undefined;
 
-if (!adapter) {
-  console.warn("Auth.js: SupabaseAdapter is not initialized because environment variables are missing.");
-}
-
-const providers: NextAuthConfig["providers"] = [
-  CredentialsProvider({
-    name: "Credentials",
-    credentials: {
-      email: { label: "Email", type: "email", placeholder: "you@example.com" },
-      password: { label: "Password", type: "password" }
-    },
-    async authorize(credentials) {
-      if (!credentials?.email || !credentials?.password) return null;
-
-      const supabase = createSupabaseServerClient();
-      const { data: user } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", credentials.email as string)
-        .maybeSingle();
-
-      if (!user || !user.password_hash) return null;
-
-      const isPasswordCorrect = await bcrypt.compare(
-        credentials.password as string,
-        user.password_hash
-      );
-
-      if (!isPasswordCorrect) return null;
-
-      return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      };
-    }
-  }),
-  // Add Google Provider only if credentials exist
-  ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-    ? [
-        GoogleProvider({
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
-      ]
-    : []),
-];
-
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  console.warn("Auth.js: GoogleProvider will be disabled because GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET are missing.");
-}
-
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const authConfig = {
   secret: process.env.AUTH_SECRET,
   adapter,
   session: { strategy: "jwt" },
-  providers,
-  trustHost: true,
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email", placeholder: "you@example.com" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
 
+        const supabase = createSupabaseServerClient();
+        const { data: user } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", credentials.email as string)
+          .maybeSingle();
+
+        if (!user || !user.password_hash) return null;
+
+        const isPasswordCorrect = await bcrypt.compare(
+          credentials.password as string,
+          user.password_hash
+        );
+
+        if (!isPasswordCorrect) return null;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        };
+      }
+    }),
+    // Add Google Provider only if credentials exist
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
+  ],
+  trustHost: true,
+  basePath: "/api/auth",
   pages: {
     signIn: "/login",
   },
   callbacks: {
     jwt({ token, user }) {
-      if (user) { // User is available during sign-in
-        token.id = user.id
+      if (user) {
+        token.id = user.id;
       }
-      return token
+      return token;
     },
     session({ session, token }) {
-      session.user.id = token.id as string
-      return session
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
     },
   },
   events: {
     async createUser({ user }) {
       if (user.email) {
-        // Send welcome email for new OAuth signups
         await sendWelcomeEmail(user.email, user.name || "");
       }
     },
   },
-});
+} satisfies NextAuthConfig;
+
+export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
