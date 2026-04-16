@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-type Credentials = Partial<Record<"email" | "password", string>>;
+
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET,
@@ -18,7 +18,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email", placeholder: "you@example.com" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials?: Credentials) {
+      async authorize(credentials) {
         if (credentials?.email === "user@example.com" && credentials?.password === "password") {
           return { id: "1", name: "Demo User", email: "user@example.com" };
         }
