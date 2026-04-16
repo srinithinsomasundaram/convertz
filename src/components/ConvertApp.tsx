@@ -1361,9 +1361,7 @@ export default function ConvertApp({
               </svg>
               Back to Tools
             </button>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6">
                 {statusMessage && (
                   <div
                     className={`rounded-2xl border p-4 text-sm font-semibold ${
@@ -1463,6 +1461,10 @@ export default function ConvertApp({
                     </div>
                   </div>
                 )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2 space-y-6">
                 <div
                   className={`relative overflow-hidden rounded-3xl border-2 border-dashed border-slate-300/80 bg-white/50 backdrop-blur-md p-8 sm:p-14 text-center transition-all duration-300 ${
                     isDragging ? "border-indigo-500 bg-indigo-50/50 scale-[1.02]" : "hover:border-slate-400 hover:bg-white/80"
