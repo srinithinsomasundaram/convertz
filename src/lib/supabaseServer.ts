@@ -6,10 +6,10 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const createSupabaseServerClient = () => {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    console.error("FATAL: Supabase environment variables are missing. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+    const isProd = process.env.NODE_ENV === "production";
+    console.error(`[Supabase] ${isProd ? "FATAL" : "WARNING"}: Environment variables are missing. ${!supabaseUrl ? "NEXT_PUBLIC_SUPABASE_URL is missing. " : ""}${!supabaseServiceRoleKey ? "SUPABASE_SERVICE_ROLE_KEY is missing." : ""}`);
+    
     // Return a dummy client or handle appropriately in your app logic
-    // For now, we'll try to create it anyway to avoid breaking types, 
-    // but the error above is now a log instead of a crash.
     return createClient(supabaseUrl || "https://missing.supabase.co", supabaseServiceRoleKey || "missing_key", {
       auth: {
         persistSession: false,
