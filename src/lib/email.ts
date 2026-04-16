@@ -254,3 +254,50 @@ export async function sendNewsletterBroadcastEmail(emails: string[], post: { tit
     return { success: false, error };
   }
 }
+
+export async function sendVerificationEmail(email: string, token: string) {
+  if (!resend) {
+    console.error("RESEND_API_KEY is not configured in .env.local");
+    return { success: false, error: "Email service not configured" };
+  }
+  const verificationLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Convertz <urconvertz@yespstudio.com>",
+      to: [email],
+      subject: "Verify your Convertz account",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc; border-radius: 16px;">
+          <div style="background-color: #4f46e5; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">Welcome to Convertz!</h1>
+          </div>
+          <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: #1e293b; margin-top: 0;">Please verify your email address</h2>
+            <p style="color: #475569; line-height: 1.6;">Thank you for signing up for Convertz! To complete your registration and unlock all features, please verify your email address by clicking the button below:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${verificationLink}" 
+                 style="background-color: #4f46e5; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);">
+                 Verify Email Address
+              </a>
+            </div>
+            <p style="color: #64748b; font-size: 14px; line-height: 1.6;">This link will expire in 24 hours. If you didn't create an account with us, you can safely ignore this email.</p>
+          </div>
+          <div style="text-align: center; margin-top: 20px; color: #94a3b8; font-size: 12px;">
+            <p>© 2026 Convertz. All rights reserved.</p>
+          </div>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Failed to send verification email:", error);
+    return { success: false, error };
+  }
+}
