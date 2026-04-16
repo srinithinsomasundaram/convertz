@@ -20,16 +20,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth(async (req) => {
     });
   }
 
-  const adapter = (supabaseUrl && supabaseSecret) 
+  const baseAdapter = (supabaseUrl && supabaseSecret) 
     ? SupabaseAdapter({
         url: supabaseUrl,
         secret: supabaseSecret,
       })
     : undefined;
 
+  // Debug wrapper to catch the EXACT Postgres error
+  const adapter = baseAdapter ? {
+    ...baseAdapter,
+    async getUserByAccount(...args: any[]) {
+      try {
+        // @ts-ignore
+        return await baseAdapter.getUserByAccount(...args);
+      } catch (error) {
+        console.error("!!! ADAPTER ERROR in getUserByAccount:", error);
+        throw error;
+      }
+    }
+  } : undefined;
+
   return {
     secret: process.env.AUTH_SECRET,
-    adapter,
+    adapter, // RE-ENABLED
     session: { strategy: "jwt" },
     providers: [
       CredentialsProvider({
@@ -70,10 +84,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth(async (req) => {
             GoogleProvider({
               clientId: process.env.GOOGLE_CLIENT_ID,
               clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+              allowDangerousEmailAccountLinking: true,
             }),
           ]
         : []),
     ],
+    debug: true,
     trustHost: true,
     basePath: "/api/auth",
     pages: {
