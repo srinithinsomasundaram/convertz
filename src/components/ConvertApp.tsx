@@ -1364,6 +1364,105 @@ export default function ConvertApp({
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-6">
+                {statusMessage && (
+                  <div
+                    className={`rounded-2xl border p-4 text-sm font-semibold ${
+                      statusMessage.type === "error"
+                        ? "border-rose-200 bg-rose-50 text-rose-700"
+                        : statusMessage.type === "success"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-slate-200 bg-slate-50 text-slate-700"
+                    }`}
+                  >
+                    {statusMessage.message}
+                  </div>
+                )}
+
+                {(status || isConverting) && (
+                  <div 
+                    ref={conversionStatusRef}
+                    className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+                  >
+                    <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
+                      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`rounded-xl p-2 ${status === "failed" ? "bg-rose-50 text-rose-600" : "bg-indigo-50 text-indigo-600"}`}>
+                            {status === "converting" && (
+                              <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                                <path className="opacity-25" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                <path className="opacity-75" d="M12 4v4m0 8v4M4 12H0m24 0h-4M18.364 5.636l-2.828 2.828m-9.072 9.072l-2.828 2.828m0-14.144l2.828 2.828m9.072 9.072l2.828 2.828" />
+                              </svg>
+                            )}
+                            {status === "uploading" && (
+                              <svg className="h-5 w-5 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                              </svg>
+                            )}
+                            {status === "done" && (
+                              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                            {status === "failed" && (
+                              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black uppercase tracking-widest text-slate-400">
+                              {status === "converting" ? "Converting File" : status === "uploading" ? "Finalizing" : status === "done" ? "Success" : "Error"}
+                            </p>
+                            <h4 className="text-lg font-bold text-slate-800">
+                              {status === "converting" ? "Processing your assets..." : status === "uploading" ? "Generating download link..." : status === "done" ? "Your file is ready" : "Something went wrong"}
+                            </h4>
+                          </div>
+                        </div>
+                        {status === "done" ? (
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">
+                            100%
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className={`h-full transition-all duration-500 ease-out ${status === "failed" ? "bg-rose-500" : "gradient-bg"}`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+
+                      {status === "done" && download && (
+                        <p className="mt-4 text-sm font-medium text-slate-500">
+                          {download.filename}
+                        </p>
+                      )}
+
+                      {status === "done" && resultNotes.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {resultNotes.map((note) => (
+                            <span
+                              key={note}
+                              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"
+                            >
+                              {note}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {status === "failed" && (
+                        <button
+                          onClick={handleConvert}
+                          className="mt-8 w-full rounded-2xl bg-slate-900 py-4 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-95"
+                        >
+                          Try Again
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div
                   className={`relative overflow-hidden rounded-3xl border-2 border-dashed border-slate-300/80 bg-white/50 backdrop-blur-md p-8 sm:p-14 text-center transition-all duration-300 ${
                     isDragging ? "border-indigo-500 bg-indigo-50/50 scale-[1.02]" : "hover:border-slate-400 hover:bg-white/80"
@@ -1581,105 +1680,6 @@ export default function ConvertApp({
                   )}
                 </div>
 
-                {statusMessage && (
-                  <div
-                    className={`rounded-2xl border p-4 text-sm font-semibold ${
-                      statusMessage.type === "error"
-                        ? "border-rose-200 bg-rose-50 text-rose-700"
-                        : statusMessage.type === "success"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : "border-slate-200 bg-slate-50 text-slate-700"
-                    }`}
-                  >
-                    {statusMessage.message}
-                  </div>
-                )}
-
-                {(status || isConverting) && (
-                  <div 
-                    ref={conversionStatusRef}
-                    className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
-                  >
-                    <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
-                      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`rounded-xl p-2 ${status === "failed" ? "bg-rose-50 text-rose-600" : "bg-indigo-50 text-indigo-600"}`}>
-                            {status === "converting" && (
-                              <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                                <path className="opacity-25" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                <path className="opacity-75" d="M12 4v4m0 8v4M4 12H0m24 0h-4M18.364 5.636l-2.828 2.828m-9.072 9.072l-2.828 2.828m0-14.144l2.828 2.828m9.072 9.072l2.828 2.828" />
-                              </svg>
-                            )}
-                            {status === "uploading" && (
-                              <svg className="h-5 w-5 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                              </svg>
-                            )}
-                            {status === "done" && (
-                              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                            {status === "failed" && (
-                              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                              </svg>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-black uppercase tracking-widest text-slate-400">
-                              {status === "converting" ? "Converting File" : status === "uploading" ? "Finalizing" : status === "done" ? "Success" : "Error"}
-                            </p>
-                            <h4 className="text-lg font-bold text-slate-800">
-                              {status === "converting" ? "Processing your assets..." : status === "uploading" ? "Generating download link..." : status === "done" ? "Your file is ready" : "Something went wrong"}
-                            </h4>
-                          </div>
-                        </div>
-                        {status === "done" ? (
-                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">
-                            100%
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className={`h-full transition-all duration-500 ease-out ${status === "failed" ? "bg-rose-500" : "gradient-bg"}`}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-
-                      {status === "done" && download && (
-                        <p className="mt-4 text-sm font-medium text-slate-500">
-                          {download.filename}
-                        </p>
-                      )}
-
-                      {status === "done" && resultNotes.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {resultNotes.map((note) => (
-                            <span
-                              key={note}
-                              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"
-                            >
-                              {note}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {status === "failed" && (
-                        <button
-                          onClick={handleConvert}
-                          className="mt-8 w-full rounded-2xl bg-slate-900 py-4 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-95"
-                        >
-                          Try Again
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="space-y-6">
