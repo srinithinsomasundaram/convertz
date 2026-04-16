@@ -684,11 +684,15 @@ export default function ConvertApp({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
+  const conversionStatusRef = useRef<HTMLDivElement | null>(null);
   const downloadBannerRef = useRef<HTMLDivElement | null>(null);
   const draggedIndexRef = useRef<number | null>(null);
   const isAuthenticated = Boolean(session?.user?.id);
 
   useEffect(() => {
+    if ((status === "converting" || status === "uploading") && conversionStatusRef.current) {
+      conversionStatusRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
     if (status === "done" && downloadBannerRef.current) {
       downloadBannerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -1592,7 +1596,10 @@ export default function ConvertApp({
                 )}
 
                 {(status || isConverting) && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div 
+                    ref={conversionStatusRef}
+                    className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+                  >
                     <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
                       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex items-center gap-3">

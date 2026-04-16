@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { SupabaseAdapter } from "@auth/supabase-adapter";
 import { sendWelcomeEmail } from "@/lib/email";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import bcrypt from "bcryptjs";
 
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -24,10 +26,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (credentials?.email === "user@example.com" && credentials?.password === "password") {
-          return { id: "1", name: "Demo User", email: "user@example.com" };
-        }
-        return null;
+        if (!credentials?.email || !credentials?.password) return null;
+
+        const supabase = createSupabaseServerClient();
+        const { data: user } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", credentials.email as string)
+          .maybeSingle();
+
+        if (!user || !user.password_hash) return null;
+
+        const isPasswordCorrect = await bcrypt.compare(
+          credentials.password as string,
+          user.password_hash
+        );
+
+        if (!isPasswordCorrect) return null;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        };
       }
     })
   ],
