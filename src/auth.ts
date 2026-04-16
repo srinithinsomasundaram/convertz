@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { SupabaseAdapter } from "@auth/supabase-adapter";
@@ -27,7 +27,7 @@ if (!adapter) {
   console.warn("Auth.js: SupabaseAdapter is not initialized because environment variables are missing.");
 }
 
-const providers = [
+const providers: NextAuthConfig["providers"] = [
   CredentialsProvider({
     name: "Credentials",
     credentials: {
@@ -59,18 +59,19 @@ const providers = [
         email: user.email,
       };
     }
-  })
+  }),
+  // Add Google Provider only if credentials exist
+  ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ? [
+        GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        }),
+      ]
+    : []),
 ];
 
-// Add Google Provider only if credentials exist
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    })
-  );
-} else {
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   console.warn("Auth.js: GoogleProvider will be disabled because GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET are missing.");
 }
 
