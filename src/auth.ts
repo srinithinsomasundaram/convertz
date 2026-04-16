@@ -7,12 +7,20 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import bcrypt from "bcryptjs";
 
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseSecret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Only initialize adapter if we have the credentials
+const adapter = (supabaseUrl && supabaseSecret) 
+  ? SupabaseAdapter({
+      url: supabaseUrl,
+      secret: supabaseSecret,
+    })
+  : undefined;
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET,
-  adapter: SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }),
+  adapter,
   session: { strategy: "jwt" },
   providers: [
     GoogleProvider({
