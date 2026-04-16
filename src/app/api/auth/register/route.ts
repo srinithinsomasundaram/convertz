@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import bcrypt from "bcryptjs";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendVerificationEmail } from "@/lib/email";
+import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
@@ -54,11 +55,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // Send welcome email (asynchronous, don't block response)
-    void sendWelcomeEmail(email, name);
+    // Generate verification token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    const { error: tokenError } = await supabase
+      .from("verification_tokens")
+      .insert([
+        {
+          identifier: email,
+          token,
+          expires: expires.toISOString(),
+        },
+      ]);
+
+    if (tokenError) {
+      console.error("Error creating verification token:", tokenError);
+      // We don't fail registration if token creation fails, but it's not ideal
+    } else {
+      // Send verification email
+      void sendVerificationEmail(email, token);
+    }
 
     return NextResponse.json(
-      { message: "User registered successfully", userId: newUser.id },
+      { 
+        message: "User registered successfully. Please check your email to verify your account.", 
+        userId: newUser.id,
+        requiresVerification: true 
+      },
       { status: 201 }
     );
   } catch (error) {

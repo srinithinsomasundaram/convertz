@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     // Real registration logic
     try {
@@ -34,10 +36,18 @@ export default function RegisterPage() {
         } else {
           setError(data.error || "Registration failed. Please try again.");
         }
+        setIsLoading(false);
         return;
       }
 
-      // If registration success, auto sign-in
+      // If verification is required, show success message
+      if (data.requiresVerification) {
+        setIsSuccess(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fallback: If no verification required, auto sign-in (legacy behavior)
       const res = await signIn("credentials", {
         redirect: false,
         email,
@@ -52,11 +62,48 @@ export default function RegisterPage() {
       }
     } catch (error) {
       console.error("Fetch error during registration:", error);
-      router.push("/login");
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
+        <div className="relative w-full max-w-md">
+          <div className="absolute -left-4 -top-4 h-72 w-72 rounded-full bg-emerald-300 mix-blend-multiply opacity-30 blur-2xl filter animate-blob" />
+          <div className="absolute -right-4 -top-8 h-72 w-72 rounded-full bg-indigo-300 mix-blend-multiply opacity-30 blur-2xl filter animate-blob animation-delay-2000" />
+          <div className="relative z-10 rounded-[32px] border border-slate-100 bg-white/70 px-8 py-12 text-center shadow-xl backdrop-blur-xl">
+            <div className="mb-6 flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Check your email</h1>
+            <p className="mt-4 text-sm font-medium leading-relaxed text-slate-600">
+              We've sent a verification link to <span className="font-bold text-slate-900">{email}</span>. 
+              Please click the link in the email to activate your account.
+            </p>
+            <div className="mt-8 space-y-3">
+              <Link href="/login" className="flex w-full items-center justify-center rounded-full bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-indigo-500 transition-all">
+                Return to login
+              </Link>
+              <button 
+                onClick={() => setIsSuccess(false)}
+                className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                type="button"
+              >
+                Entered the wrong email?
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">

@@ -63,7 +63,7 @@ export async function sendWelcomeEmail(email: string, name?: string) {
                Go to Dashboard
             </a>
           </div>
-          <p>If you have any questions, feel free to reply to this email.</p>
+          <p>If you have any questions, feel free to reply to this email hello@yespstudio.com</p>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
           <p style="color: #94a3b8; font-size: 12px;">Convertz - Professional File Conversions</p>
         </div>
@@ -106,11 +106,11 @@ export async function sendInactivityEmail(email: string, name?: string) {
   }
 }
 
-export async function sendContactEmail(details: { 
-  name: string; 
-  email: string; 
-  subject: string; 
-  message: string 
+export async function sendContactEmail(details: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string
 }) {
   if (!resend) {
     console.error("RESEND_API_KEY is not configured in .env.local");
@@ -221,7 +221,7 @@ export async function sendNewsletterBroadcastEmail(emails: string[], post: { tit
     // For now, we'll send a single email with BCC for privacy if the list is small, 
     // or loop if it's moderate. Since Resend has rate limits, we'll send it as one email to hello@ 
     // and BCC the others for simplicity in this V1.
-    
+
     const { data, error } = await resend.emails.send({
       from: "Convertz Newsletter <urconvertz@yespstudio.com>",
       to: ["hello@yespstudio.com"], // Dummy recipient

@@ -1130,7 +1130,7 @@ export default function ConvertApp({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div id="popular-tools" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 scroll-mt-24">
               {tools.map((tool) => (
                 <button
                   type="button"

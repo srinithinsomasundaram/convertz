@@ -162,6 +162,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!isPasswordCorrect) return null;
 
+        if (!user.emailVerified) {
+          throw new Error("unverified");
+        }
+
         return {
           id: user.id,
           name: user.name,
@@ -197,9 +201,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async createUser({ user }) {
-      if (user.email) {
-        await sendWelcomeEmail(user.email, user.name || "");
-      }
+      // For Google/OAuth users, we can mark them as verified immediately
+      // if the provider confirms it. Google does.
+      // For manual signup, we handle the verification email in the register API.
     },
   },
 });

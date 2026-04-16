@@ -10,6 +10,7 @@ type LoginPageProps = {
     email?: string | string[] | undefined;
     registered?: string | string[] | undefined;
     reset?: string | string[] | undefined;
+    verified?: string | string[] | undefined;
   }>;
 };
 
@@ -26,6 +27,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
   const presetEmail = getSingleParam(params.email) ?? "";
   const didRegister = getSingleParam(params.registered) === "true";
   const didResetPassword = getSingleParam(params.reset) === "success";
+  const didVerify = getSingleParam(params.verified) === "true";
   const [email, setEmail] = useState(presetEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -45,7 +47,11 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
       });
 
       if (res?.error) {
-        setError("Invalid email or password");
+        if (res.error.includes("unverified") || res.code === "unverified") {
+          setError("Please verify your email address before logging in. Check your inbox for the link.");
+        } else {
+          setError("Invalid email or password");
+        }
       } else {
         router.push("/");
         router.refresh();
@@ -89,7 +95,12 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
                 Password updated. Sign in with your new password.
               </div>
             )}
-            {didRegister && !didResetPassword && (
+            {didVerify && (
+              <div className="rounded-2xl bg-emerald-50 p-4 text-center text-sm font-bold text-emerald-600">
+                Email verified! You can now sign in.
+              </div>
+            )}
+            {didRegister && !didResetPassword && !didVerify && (
               <div className="rounded-2xl bg-indigo-50 p-4 text-center text-sm font-bold text-indigo-600">
                 Registration completed. Sign in to continue.
               </div>
